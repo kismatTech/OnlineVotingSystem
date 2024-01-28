@@ -1,0 +1,15 @@
+.white-text{
+    color:white;
+    text-decoration: none;
+}
+
+p .error{
+    margin-top: 30px;
+    color: #ff9292;
+    line-height: 26px;
+ }
+  
+ .success{
+    margin-top: 30px;
+    color: rgb(155, 255, 155);
+ }
