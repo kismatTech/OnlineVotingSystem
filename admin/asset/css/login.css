@@ -1,14 +1,17 @@
 body {
-    background: rgb(184, 232, 232) !important;
+    background: #f0f2f5
+    !important;
 }
 .card {
-    border: 1px solid #0a3b16;
+    border: 1px solid #3b150a;
     box-shadow: #7995b2;
 }
 .card-login {
-    margin-top: 130px;
+    margin-top: 50px;
     padding: 18px;
     max-width: 30rem;
+    /* box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.2); */
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .card-header {
