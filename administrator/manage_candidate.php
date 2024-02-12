@@ -3,7 +3,7 @@ require("Adminsession.php");
 ?>
 
 <!doctype html>
-<html lang="en" class="color-sidebar sidebarcolor3 color-header headercolor2">
+<html lang="en" class="color-sidebar sidebarcolor1">
 
 <head>
 	<!-- Required meta tags -->
@@ -31,6 +31,10 @@ require("Adminsession.php");
 
 	<link href="../assets/plugins/select2/css/select2.min.css" rel="stylesheet" />
 	<link href="../assets/plugins/select2/css/select2-bootstrap4.css" rel="stylesheet" />
+	<!-- SweetAlert-->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<script src="sweetalert2.min.js"></script>
+	<link rel="stylesheet" href="sweetalert2.min.css">
 	<title>Online Voting System - Manage Candidate</title>
 </head>
 
@@ -64,7 +68,8 @@ require("Adminsession.php");
 									<tbody>
 										<?php
 										include 'connection.php';
-										$stmt = $mysqli->prepare("Select * from candidate order by id");
+										$stmt = $mysqli->prepare("Select * from candidate Where createdby=? order by id");
+										$stmt->bind_param("s", $_SESSION["username"]);
 										$stmt->execute();
 										$result = $stmt->get_result();
 										if ($result->num_rows > 0) {
@@ -115,10 +120,10 @@ require("Adminsession.php");
 											<?php
 											include 'connection.php';
 
-											$fetch_candidate_table = "SELECT * FROM candidate ORDER BY id";
-											$stmt_fetch = $mysqli->prepare($fetch_candidate_table);
-											$stmt_fetch->execute();
-											$result_fetch = $stmt_fetch->get_result();
+											$stmt = $mysqli->prepare("Select * from candidate where createdby=? order by id");
+											$stmt->bind_param("s", $_SESSION["username"]);
+											$stmt->execute();
+											$result_fetch = $stmt->get_result();
 
 											if ($result_fetch->num_rows > 0) {
 												while ($row_fetch = $result_fetch->fetch_assoc()) {
@@ -140,7 +145,8 @@ require("Adminsession.php");
 											<option value="0">Select Available Position</option>
 											<?php
 											include 'connection.php';
-											$stmt = $mysqli->prepare("Select * from positions order by id");
+											$stmt = $mysqli->prepare("Select * from positions Where createdby=? order by id");
+											$stmt->bind_param("s", $_SESSION["username"]);
 											$stmt->execute();
 											$result = $stmt->get_result();
 											if ($result->num_rows > 0) {
@@ -169,10 +175,16 @@ require("Adminsession.php");
 			$candidate_name = isset($_POST['candidate_name']) ? $_POST['candidate_name'] : '';
 			if (isset($_POST['update'])) {
 				if ($position_name == '0' || $candidate_name == '0') {
-					echo "<div class='auto-close alert alert-danger alert-dismissible fade show col-lg-5 col-md-12'>
-										<strong>Warning!</strong> PLEASE SELECT VALID Field ...!
-										<button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-									</div>";
+					echo '<script>
+					Swal.fire({
+						title: "Warning!",
+						text: " Please Select Valid Field.",
+						icon: "error"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
+					
 				} else {
 					include 'connection.php';
 					$votes = 0;
@@ -188,16 +200,28 @@ require("Adminsession.php");
 						$stmt = $mysqli->prepare("UPDATE `candidate` SET `position_name` = ? WHERE `candidate`.`candidate_name` = ?");
 						$stmt->bind_param("ss", $position_name, $candidate_name);
 						if ($stmt->execute() == TRUE) {
-							echo "<div class='auto-close alert alert-success alert-dismissible fade show col-lg-5 col-md-12'>
-										<strong>Success!</strong> POSITION ADDED SUCCESSFULLY TO CANDIDATE.
-										<button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-									</div>";
+							echo '<script>
+					Swal.fire({
+						title: "Success!",
+						text: " Position Added Successfully to Candidate.",
+						icon: "error"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
+							
 						}
 					} else {
-						echo "<div class='auto-close alert alert-danger alert-dismissible fade show col-lg-5 col-md-12'>
-										<strong>Warning!</strong> UNABLE TO CHANGE POSITION AS HE/SHE VOTED ALREADY.
-										<button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-									</div>";
+						echo '<script>
+					Swal.fire({
+						title: "Oops!",
+						text: " Unable to change Position as He/She Voted Already",
+						icon: "error"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
+						
 					}
 				}
 			}

@@ -2,7 +2,7 @@
 require("Votersession.php");
 ?>
 <!doctype html>
-<html lang="en" class="color-sidebar sidebarcolor3 color-header headercolor2">
+<html lang="en" class="color-sidebar sidebarcolor5 color-header headercolor2">
 
 <head>
 	<!-- Required meta tags -->
@@ -152,11 +152,21 @@ require("Votersession.php");
 														<option value="0">Select Available Position</option>
 														<?php
 														include 'connection.php';
-														$fetch_position_table = "Select * from positions order by id";
-														$fetch_query_run1 = mysqli_query($con, $fetch_position_table);
-
-														if (mysqli_num_rows($fetch_query_run1) > 0) {
-															while ($row_fetch1 = mysqli_fetch_array($fetch_query_run1)) {
+														$stmt = $mysqli->prepare("Select team from users where username=?");
+														$stmt->bind_param("s", $_SESSION['username']);
+														$stmt->execute();
+														$result1 = $stmt->get_result();
+														if ($result1->num_rows > 0) {
+															while ($row_fetch2 = $result1->fetch_assoc()) {
+																$team = $row_fetch2['team'];
+															}
+														}
+														$stmt = $mysqli->prepare("Select * from positions where createdby=? order by id");
+														$stmt->bind_param("s", $team);
+														$stmt->execute();
+														$result = $stmt->get_result();
+														if ($result->num_rows > 0) {
+															while ($row_fetch1 = $result->fetch_assoc()) {
 														?>
 																<option <?php echo (isset($_POST['position_name']) && $_POST['position_name'] == $row_fetch1['position']) ? 'selected="selected"' : ''; ?> value="<?php echo $row_fetch1['position']; ?>"><?php echo $row_fetch1['position']; ?></option>
 														<?php

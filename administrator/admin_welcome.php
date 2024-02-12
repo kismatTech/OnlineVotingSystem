@@ -2,7 +2,7 @@
 require("Adminsession.php");
 ?>
 <!doctype html>
-<html lang="en" class="color-sidebar sidebarcolor3 color-header headercolor2">
+<html lang="en" class="color-sidebar sidebarcolor1">
 
 <head>
 	<!-- Required meta tags -->
@@ -47,7 +47,7 @@ require("Adminsession.php");
 				include '../common_header.php'
 				?>
 
-				<div class="row mt-5 mb-4">
+				<!-- <div class="row mt-5 mb-4">
 					<div class="col-md-6">
 						<div class="box">
 							<div id="chart1"></div>
@@ -59,7 +59,7 @@ require("Adminsession.php");
 							<div id="chart"></div>
 						</div>
 					</div>
-				</div>
+				</div> -->
 				<div class="card radius-10">
 					<div class="card-header border-bottom-0 bg-transparent">
 						<div class="d-flex align-items-center">
@@ -85,18 +85,119 @@ require("Adminsession.php");
 								<tbody>
 									<?php
 									include 'connection.php';
-									$stmt = $mysqli->prepare("Select * from candidate order by vote DESC");
+									$stmt = $mysqli->prepare("SELECT * FROM candidate WHERE createdby=? ORDER BY vote DESC");
+									$stmt->bind_param("s", $_SESSION["username"]);
 									$stmt->execute();
-									$result = $stmt->get_result();
+									$query_run = $stmt->get_result();
 
-									if ($mysqli->affected_rows > 0) {
-										while ($row_fetch = $result->fetch_assoc()) {
+									if ($query_run->num_rows > 0) {
+										while ($row_fetch = $query_run->fetch_assoc()) {
 									?>
 											<tr>
 												<td><?php echo $row_fetch['candidate_name']; ?></td>
 												<td><?php echo $row_fetch['position_name']; ?></td>
 												<td><?php echo $row_fetch['vote']; ?></td>
 
+											</tr>
+
+									<?php
+										}
+									}
+									?>
+
+
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+				<div class="card radius-10">
+					<div class="card-header border-bottom-0 bg-transparent">
+						<div class="d-flex align-items-center">
+							<div>
+								<h5 class="font-weight-bold mb-0">Voters</h5>
+							</div>
+							<!--<div class="ms-auto">-->
+							<!--	<button type="button" class="btn btn-white radius-10">View More</button>-->
+							<!--</div>-->
+						</div>
+					</div>
+					<div class="card-body">
+						<div class="table-responsive">
+							<table class="table table-striped table-bordered mb-0 align-middle">
+								<thead>
+									<tr>
+										<th>Voter Name</th>
+										<th>Voter Email</th>
+										<th>Voter Contact</th>
+										<th></th>
+
+									</tr>
+								</thead>
+								<tbody>
+									<?php
+									if (isset($_POST['delete'])) {
+
+										$user_id = isset($_POST['user_id']) ? $_POST['user_id'] : null;
+										$username = isset($_POST['username']) ? $_POST['username'] : null;
+										$team_name = isset($_POST['team_name']) ? $_POST['team_name'] : null;
+										// echo $user_id;
+										// echo $username;
+										// echo $team_name;
+
+
+										$stmt1 = $mysqli->prepare("Select * from positions where users = ?");
+										$stmt1->bind_param("s", $username);
+										$stmt1->execute();
+										$result1 = $stmt1->get_result();
+										if ($result1->num_rows > 0) {
+											while ($row_fetch2 = $result1->fetch_assoc()) {
+												// $status = $row_fetch2['status'];
+												$users = $row_fetch2['users'];
+											}
+										}
+										// echo $users;
+										// if($status == $Value){
+										// 	echo "value matched";
+										// }
+										$stmt = $mysqli->prepare("DELETE FROM users WHERE id = ?");
+										$stmt->bind_param("i", $id);
+										$stmt->execute();
+										if ($stmt->affected_rows > 0) {
+											// Deletion successful
+											echo '<script>
+                                                    Swal.fire({
+                                                        title: "Deleted!",
+                                                        text: "The user has been deleted.",
+                                                        icon: "success"
+                                                    }).then(() => {
+                                                        window.location.href = window.location.pathname; // Reload page after deletion
+                                                    });
+                                                  </script>';
+										}
+									}
+									include 'connection.php';
+									$stmt1 = $mysqli->prepare("SELECT * FROM users WHERE team=?");
+									$stmt1->bind_param("s", $_SESSION["username"]);
+									$stmt1->execute();
+									$query = $stmt1->get_result();
+
+									if ($query->num_rows > 0) {
+										while ($row_fetch = $query->fetch_assoc()) {
+									?>
+											<tr>
+												<td><?php echo $row_fetch['username']; ?></td>
+												<td><?php echo $row_fetch['email']; ?></td>
+												<td><?php echo $row_fetch['contact']; ?></td>
+												<td>
+													<form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+														<input type="text" name="user_id" style="display:none;" value="<?php echo $row_fetch['id'] ?>">
+														<input type="text" name="username" style="display:none;" value="<?php echo $row_fetch['username'] ?>">
+														<input type="text" name="team_name" style="display:none;" value="<?php echo $row_fetch['team'] ?>">
+														<button type="submit" name="delete" class="btn btn-danger px-1">&nbsp;<i class='bx bxs-trash'></i></button>
+													</form>
+													
+												</td>
 											</tr>
 
 									<?php
@@ -307,91 +408,91 @@ require("Adminsession.php");
 
 		var chart = new ApexCharts(document.querySelector("#chart"), options);
 		chart.render();
-		</script>
+	</script>
 
-		<script>
+	<script>
 		var options = {
-          series: [{
-          name: 'PRODUCT A',
-          data: dataSet[0]
-        }, {
-          name: 'PRODUCT B',
-          data: dataSet[1]
-        }, {
-          name: 'PRODUCT C',
-          data: dataSet[2]
-        }],
-          chart: {
-          type: 'area',
-          stacked: false,
-          height: 350,
-          zoom: {
-            enabled: false
-          },
-        },
-        dataLabels: {
-          enabled: false
-        },
-        markers: {
-          size: 0,
-        },
-        fill: {
-          type: 'gradient',
-          gradient: {
-              shadeIntensity: 1,
-              inverseColors: false,
-              opacityFrom: 0.45,
-              opacityTo: 0.05,
-              stops: [20, 100, 100, 100]
-            },
-        },
-        yaxis: {
-          labels: {
-              style: {
-                  colors: '#8e8da4',
-              },
-              offsetX: 0,
-              formatter: function(val) {
-                return (val / 1000000).toFixed(2);
-              },
-          },
-          axisBorder: {
-              show: false,
-          },
-          axisTicks: {
-              show: false
-          }
-        },
-        xaxis: {
-          type: 'datetime',
-          tickAmount: 8,
-          min: new Date("01/01/2014").getTime(),
-          max: new Date("01/20/2014").getTime(),
-          labels: {
-              rotate: -15,
-              rotateAlways: true,
-              formatter: function(val, timestamp) {
-                return moment(new Date(timestamp)).format("DD MMM YYYY")
-            }
-          }
-        },
-        title: {
-          text: 'Irregular Data in Time Series',
-          align: 'left',
-          offsetX: 14
-        },
-        tooltip: {
-          shared: true
-        },
-        legend: {
-          position: 'top',
-          horizontalAlign: 'right',
-          offsetX: -10
-        }
-        };
+			series: [{
+				name: 'PRODUCT A',
+				data: dataSet[0]
+			}, {
+				name: 'PRODUCT B',
+				data: dataSet[1]
+			}, {
+				name: 'PRODUCT C',
+				data: dataSet[2]
+			}],
+			chart: {
+				type: 'area',
+				stacked: false,
+				height: 350,
+				zoom: {
+					enabled: false
+				},
+			},
+			dataLabels: {
+				enabled: false
+			},
+			markers: {
+				size: 0,
+			},
+			fill: {
+				type: 'gradient',
+				gradient: {
+					shadeIntensity: 1,
+					inverseColors: false,
+					opacityFrom: 0.45,
+					opacityTo: 0.05,
+					stops: [20, 100, 100, 100]
+				},
+			},
+			yaxis: {
+				labels: {
+					style: {
+						colors: '#8e8da4',
+					},
+					offsetX: 0,
+					formatter: function(val) {
+						return (val / 1000000).toFixed(2);
+					},
+				},
+				axisBorder: {
+					show: false,
+				},
+				axisTicks: {
+					show: false
+				}
+			},
+			xaxis: {
+				type: 'datetime',
+				tickAmount: 8,
+				min: new Date("01/01/2014").getTime(),
+				max: new Date("01/20/2014").getTime(),
+				labels: {
+					rotate: -15,
+					rotateAlways: true,
+					formatter: function(val, timestamp) {
+						return moment(new Date(timestamp)).format("DD MMM YYYY")
+					}
+				}
+			},
+			title: {
+				text: 'Irregular Data in Time Series',
+				align: 'left',
+				offsetX: 14
+			},
+			tooltip: {
+				shared: true
+			},
+			legend: {
+				position: 'top',
+				horizontalAlign: 'right',
+				offsetX: -10
+			}
+		};
 
-        var chart = new ApexCharts(document.querySelector("#chart1"), options);
-        chart.render();
+		var chart = new ApexCharts(document.querySelector("#chart1"), options);
+		chart.render();
 	</script>
 	<script>
 		new PerfectScrollbar('.best-selling-products');

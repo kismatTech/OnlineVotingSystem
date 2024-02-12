@@ -3,7 +3,7 @@ require("Adminsession.php");
 ?>
 
 <!doctype html>
-<html lang="en" class="color-sidebar sidebarcolor3 color-header headercolor2">
+<html lang="en" class="color-sidebar sidebarcolor1">
 
 <head>
 	<!-- Required meta tags -->
@@ -28,6 +28,10 @@ require("Adminsession.php");
 	<link rel="stylesheet" href="../assets/css/dark-theme.css" />
 	<link rel="stylesheet" href="../assets/css/semi-dark.css" />
 	<link rel="stylesheet" href="../assets/css/header-colors.css" />
+	<!-- SweetAlert-->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<script src="sweetalert2.min.js"></script>
+	<link rel="stylesheet" href="sweetalert2.min.css">
 	<title>Online Voting System - Position</title>
 </head>
 
@@ -61,7 +65,8 @@ require("Adminsession.php");
 									<tbody>
 										<?php
 										include 'connection.php';
-										$stmt = $mysqli->prepare("SELECT * FROM positions ORDER BY id");
+										$stmt = $mysqli->prepare("SELECT * FROM positions WHERE createdby=? ORDER BY id");
+										$stmt->bind_param("s", $_SESSION["username"]);
 										$stmt->execute();
 										$result = $stmt->get_result();
 
@@ -146,10 +151,16 @@ require("Adminsession.php");
 
 			if (isset($_POST['save'])) {
 				if (validateInput($position_name) == false || $starting_date == NULL || $ending_date == NULL || $status == 'Inactive') {
-					echo "<div class='auto-close alert alert-danger alert-dismissible fade show col-lg-5 col-md-12'>
-										<strong>Warning!</strong> You cannot submit an invalid field.
-										<button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-									</div>";
+
+					echo '<script>
+					Swal.fire({
+						title: "Warning!",
+						text: " You cannot submit an invalid field.",
+						icon: "error"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
 				} else if (validateInput($position_name) == true) {
 					$filterdata = mysqli_real_escape_string($mysqli, validateInput($position_name));
 					// Check if the position already exists in the database
@@ -161,20 +172,30 @@ require("Adminsession.php");
 
 					if ($result) {
 						if ($stmt->affected_rows > 0) {
-							echo "<div class='auto-close alert alert-danger alert-dismissible fade show col-lg-5 col-md-12'>
-												<strong>Success!</strong> Position already exists.
-												<button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-											</div>";
+							echo '<script>
+					Swal.fire({
+						title: "Warning!",
+						text: " Position already exists.",
+						icon: "error"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
 						} else {
 							// Position doesn't exist, insert it into the database
-							$stmt_insert = $mysqli->prepare("INSERT INTO `positions` (`position`, `starting_date`, `ending_date`, `status`) VALUES (?, ?, ?, ?)");
-							$stmt_insert->bind_param('ssss', $filterdata, $starting_date, $ending_date, $status);
+							$stmt_insert = $mysqli->prepare("INSERT INTO `positions` (`position`, `starting_date`, `ending_date`, `status`,`createdby`) VALUES (?, ?, ?, ?,?)");
+							$stmt_insert->bind_param('sssss', $filterdata, $starting_date, $ending_date, $status, $_SESSION['username']);
 
 							if ($stmt_insert->execute()) {
-								echo "<div class='auto-close alert alert-success alert-dismissible fade show col-lg-5 col-md-12'>
-													<strong>Success!</strong> Position added successfully.
-													<button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-												</div>";
+								echo '<script>
+					Swal.fire({
+						title: "Added!",
+						text: " Position Added Successfully",
+						icon: "success"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
 							} else {
 								echo "Error inserting position: " . $mysqli->error;
 							}
@@ -209,23 +230,29 @@ require("Adminsession.php");
 				$position_id = $_POST['position_id'];
 
 				if (in_array($position_id, $existing_position)) {
-			?>
-					<div class='auto-close alert alert-danger alert-dismissible fade show col-lg-5 col-md-12'>
-						<strong>Warning!</strong> POSITION USED FOR CANDIDATE, UNABLE TO DELETE...!
-						<button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-					</div>
-					<?php
+					echo '<script>
+					Swal.fire({
+						title: "Unable to Delete!",
+						text: " Position Used for Candidate",
+						icon: "error"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
 				} else {
 					$stmt_delete = $mysqli->prepare("DELETE FROM `positions` WHERE `positions`.`position` = ?");
 					$stmt_delete->bind_param('i', $position_id);
 
 					if ($stmt_delete->execute()) {
-					?>
-						<div class='auto-close alert alert-success alert-dismissible fade show col-lg-5 col-md-12'>
-							<strong>Success!</strong> POSITION DELETED SUCCESSFULLY.
-							<button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-						</div>
-			<?php
+						echo '<script>
+					Swal.fire({
+						title: "Deleted!",
+						text: " Position Deleted Successfully",
+						icon: "success"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
 					} else {
 						echo "Error deleting position: " . $stmt_delete->error;
 					}

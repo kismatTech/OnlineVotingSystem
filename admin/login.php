@@ -7,7 +7,7 @@ require("inc/function.php");
 
 if (isset($_POST['su_btn'])) {
 
-    $response = registerUser($_POST['su_email'], $_POST['su_name'], $_POST['su_contact'], $_POST['su_password'], $_POST['con_password']);
+    $response = registerUser($_POST['su_email'], $_POST['su_name'], $_POST['su_contact'],$_POST['role'], $_POST['su_password'], $_POST['con_password']);
 }
 
 if (isset($_POST['login'])) {
@@ -121,6 +121,17 @@ if (isset($_POST['login'])) {
 
                         <div class="input-group form-group">
                             <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-user-secret"></i></span>
+                            </div>
+                            <select class="form-select" name="role" aria-label="Default select example">
+                                <option selected>Select Role</option>
+                                <option value="cadmin">Admin</option>
+                                <option value="voter">Voter</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group form-group">
+                            <div class="input-group-prepend">
                                 <span class="input-group-text"><i class="fas fa-key"></i></span>
                             </div>
                             <input type="password" name="su_password" value="<?php echo @$_POST['su_password']; ?>" class="form-control" placeholder="Password">
@@ -128,7 +139,7 @@ if (isset($_POST['login'])) {
 
                         <div class="input-group form-group">
                             <div class="input-group-prepend">
-                                <span class="input-group-text"><i class="fas fa-key"></i></span>
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
                             </div>
                             <input type="password" name="con_password" value="<?php echo @$_POST['con_password']; ?>" class="form-control" placeholder="Confirm Password">
                         </div>
@@ -137,8 +148,13 @@ if (isset($_POST['login'])) {
                         if (@$response == "success") {
                         ?>
                             <p style="color: rgb(69, 255, 69);" class="success">Your registration was successful</p>
+                            <?php
+                        } elseif(@$response == "adminsuccess") {
+                            ?>
+                            <p style="color: rgb(69, 255, 69);" class="success">Your registration is under verification</p>
                         <?php
-                        } else {
+                        }
+                        else {
                         ?>
                             <p style="color: #ff4646;" class="error"><?php echo @$response; ?></p>
                         <?php

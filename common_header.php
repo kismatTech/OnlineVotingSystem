@@ -8,7 +8,8 @@
                         <h5 class="mb-0 text-white">
                             <?php
                             include 'connection.php';
-                            $stmt = $mysqli->prepare("Select COUNT(*) as total from candidate order by id");
+                            $stmt = $mysqli->prepare("Select COUNT(*) as total from candidate where createdby=? order by id");
+                            $stmt->bind_param('s',$_SESSION['username']);
                             $stmt->execute();
                             $result = $stmt->get_result();
                             if ($mysqli->affected_rows > 0) {
@@ -37,7 +38,8 @@
                         <h5 class="mb-0 text-white">
                             <?php
                             include 'connection.php';
-                            $stmt = $mysqli->prepare("Select COUNT(*) as total1 from positions order by id");
+                            $stmt = $mysqli->prepare("Select COUNT(*) as total1 from positions where createdby=? order by id");
+                            $stmt->bind_param('s',$_SESSION['username']);
                             $stmt->execute();
                             $result = $stmt->get_result();
                             if ($mysqli->affected_rows > 0) {

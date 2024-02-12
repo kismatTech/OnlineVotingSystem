@@ -3,7 +3,7 @@ require("Adminsession.php");
 ?>
 
 <!doctype html>
-<html lang="en" class="color-sidebar sidebarcolor3 color-header headercolor2">
+<html lang="en" class="color-sidebar sidebarcolor1">
 
 <head>
 	<!-- Required meta tags -->
@@ -28,6 +28,10 @@ require("Adminsession.php");
 	<link rel="stylesheet" href="../assets/css/dark-theme.css" />
 	<link rel="stylesheet" href="../assets/css/semi-dark.css" />
 	<link rel="stylesheet" href="../assets/css/header-colors.css" />
+	<!-- SweetAlert-->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<script src="sweetalert2.min.js"></script>
+	<link rel="stylesheet" href="sweetalert2.min.css">
 	<title>Online Voting System - Candidate</title>
 </head>
 
@@ -60,7 +64,8 @@ require("Adminsession.php");
 									<tbody>
 										<?php
 										include 'connection.php';
-										$stmt = $mysqli->prepare("Select * from candidate order by id");
+										$stmt = $mysqli->prepare("Select * from candidate Where createdby=? order by id");
+										$stmt->bind_param("s", $_SESSION["username"]);
 										$stmt->execute();
 										$query_run = $stmt->get_result();
 										if ($mysqli->affected_rows > 0) {
@@ -70,7 +75,10 @@ require("Adminsession.php");
 													<td><?php echo $row['id'] ?></td>
 													<td><?php echo $row['candidate_name'] ?></td>
 													<td>
-														<form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post"><input type="text" name="candidate_id" style="display:none;" value="<?php echo $row['id'] ?>"><input type="text" name="vote" style="display:none;" value="<?php echo $row['vote'] ?>"><button type="submit" name="delete" class="btn btn-danger px-1">&nbsp;<i class='bx bxs-trash'></i></button></form>
+														<form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post"><input type="text" name="candidate_id" style="display:none;" value="<?php echo $row['id'] ?>"><input type="text" name="vote" style="display:none;" value="<?php echo $row['vote'] ?>">
+															<input type="text" name="position_name" style="display:none;" value="<?php echo $row['position_name'] ?>">
+															<button type="submit" name="delete" class="btn btn-danger px-1">&nbsp;<i class='bx bxs-trash'></i></button>
+														</form>
 													</td>
 												</tr>
 										<?php
@@ -127,20 +135,30 @@ require("Adminsession.php");
 
 			if (isset($_POST['save'])) {
 				if (validateInput($candidate_name) == NULL) {
-					echo "<div class='auto-close alert alert-danger alert-dismissible fade show col-lg-5 col-md-12'>
-									<strong>Warning!</strong> You cannot submit an invalid field.
-									<button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-								</div>";
+					echo '<script>
+					Swal.fire({
+						title: "Oops",
+						text: " You cannot submit an invalid field.",
+						icon: "error"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
 				} else if (validateInput($candidate_name) == true) {
 					$data = mysqli_real_escape_string($mysqli, validateInput($candidate_name));
-					$stmt_insert = $mysqli->prepare("INSERT INTO `candidate` (`candidate_name`) VALUES (?)");
-					$stmt_insert->bind_param('s', $data);
+					$stmt_insert = $mysqli->prepare("INSERT INTO `candidate` (candidate_name, createdby) VALUES (?,?)");
+					$stmt_insert->bind_param('ss', $data, $_SESSION['username']);
 
 					if ($stmt_insert->execute()) {
-						echo "<div class='auto-close alert alert-success alert-dismissible fade show col-lg-5 col-md-12'>
-										<strong>Success!</strong> CANDIDATE ADDED SUCCESSFULLY.
-										<button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-									</div>";
+						echo '<script>
+					Swal.fire({
+						title: "Added!",
+						text: " CANDIDATE ADDED SUCCESSFULLY.",
+						icon: "success"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
 					} else {
 
 						echo "<div class='auto-close alert alert-danger alert-dismissible fade show col-lg-5 col-md-12'>
@@ -149,10 +167,15 @@ require("Adminsession.php");
 									</div>";
 					}
 				} else {
-					echo "<div class='auto-close alert alert-danger alert-dismissible fade show col-lg-5 col-md-12'>
-									<strong>Warning!</strong> Validation failed.
-									<button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-								</div>";
+					echo '<script>
+					Swal.fire({
+						title: "Warning!",
+						text: " Validation failed",
+						icon: "error"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
 				}
 			}
 
@@ -162,24 +185,56 @@ require("Adminsession.php");
 			if (isset($_POST['delete'])) {
 				$candidate_id = isset($_POST['candidate_id']) ? $_POST['candidate_id'] : '';
 				$vote_count = isset($_POST['vote']) ? $_POST['vote'] : '';
+				$position_name = isset($_POST['position_name']) ? $_POST['position_name'] : '';
 
+				$stmt = $mysqli->prepare("Select status from positions where position=?");
+				$stmt->bind_param("s", $position_name);
+				$stmt->execute();
+				$result1 = $stmt->get_result();
+				if ($result1->num_rows > 0) {
+					while ($row_fetch2 = $result1->fetch_assoc()) {
+						$status = $row_fetch2['status'];
+					}
+				}
 				if ($vote_count == 0) {
-					$stmt_delete = $mysqli->prepare("DELETE FROM `candidate` WHERE `candidate`.`id` = ?");
-					$stmt_delete->bind_param('i', $candidate_id);
+					if ($status != "Active") {
+						$stmt_delete = $mysqli->prepare("DELETE FROM `candidate` WHERE `candidate`.`id` = ?");
+						$stmt_delete->bind_param('i', $candidate_id);
 
-					if ($stmt_delete->execute()) {
-						echo "<div class='auto-close alert alert-danger alert-dismissible fade show col-lg-5 col-md-12'>
-						                <strong>Success!</strong> CANDIDATE DELETED SUCCESSFULLY.
-						                <button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-						            </div>";
+						if ($stmt_delete->execute()) {
+							echo '<script>
+						Swal.fire({
+							title: "Deleted!",
+							text: " Candidate Deleted Successfully",
+							icon: "error"
+						}).then(() => {
+							window.location.href = window.location.pathname; // Reload page after deletion
+						});
+					</script>';
+						} else {
+							echo "Error deleting candidate: " . $stmt_delete->error;
+						}
 					} else {
-						echo "Error deleting candidate: " . $stmt_delete->error;
+						echo '<script>
+					Swal.fire({
+						title: "Warning!",
+						text: " Unable to delete the candidate as Election is Active",
+						icon: "error"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
 					}
 				} else {
-					echo "<div class='auto-close alert alert-danger alert-dismissible fade show col-lg-5 col-md-12'>
-						            <strong>Success!</strong> UNABLE TO DELETE CANDIDATE AS HE/SHE VOTED ALREADY.
-						            <button type='button' class='btn-close' data-bs-dismiss='alert'></button>
-						        </div>";
+					echo '<script>
+					Swal.fire({
+						title: "Warning!",
+						text: " UNABLE TO DELETE CANDIDATE AS HE/SHE VOTED ALREADY.",
+						icon: "error"
+					}).then(() => {
+						window.location.href = window.location.pathname; // Reload page after deletion
+					});
+				</script>';
 				}
 			}
 

@@ -35,7 +35,7 @@ function connect()
     }
 }
 
-function registerUser($email, $username, $contact, $password, $confirm_password)
+function registerUser($email, $username, $contact, $user_role, $password, $confirm_password)
 {
     // Establish a database connection.
     $mysqli = connect();
@@ -46,6 +46,7 @@ function registerUser($email, $username, $contact, $password, $confirm_password)
     $password = trim($password);
     $contact = trim($contact);
     $confirm_password = trim($confirm_password);
+    $user_role = trim($user_role);
 
     // Check if any field is empty.
     $args = func_get_args();
@@ -78,6 +79,13 @@ function registerUser($email, $username, $contact, $password, $confirm_password)
         // If email already exists, return an error message.
         return "Email already exists";
     }
+    $stmt = $mysqli->prepare("SELECT email FROM admin_request WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows > 0) {
+        // If email already exists, return an error message.
+        return "Email already exists";
+    }
 
     // Check if the username is too long.
     if (strlen($username) > 100) {
@@ -102,6 +110,23 @@ function registerUser($email, $username, $contact, $password, $confirm_password)
         // If username already exists, return an error message.
         return "Contact number already exists, please use a different contact number";
     }
+    // Check if the username already exists in the database.
+    $stmt = $mysqli->prepare("SELECT username FROM admin_request WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows > 0) {
+        // If username already exists, return an error message.
+        return "Username already exists, please use a different username";
+    }
+
+    // Check if the Phone number already exists in the database.
+    $stmt = $mysqli->prepare("SELECT contact FROM admin_request WHERE contact = ?");
+    $stmt->bind_param("s", $contact);
+    $stmt->execute();
+    if ($stmt->get_result()->num_rows > 0) {
+        // If username already exists, return an error message.
+        return "Contact number already exists, please use a different contact number";
+    }
 
     if (strlen($password) > 255) {
         // If password is too long, return an error message.
@@ -113,21 +138,37 @@ function registerUser($email, $username, $contact, $password, $confirm_password)
         return "Passwords don't match";
     }
 
+    if ($user_role == "Select Role") {
+        return "Please select the role";
+    }
     // Hash the password for security.
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-    $user_role = "voter";
+    // $user_role = "voter";
 
     // Insert user data into the 'users' table.
-    $stmt = $mysqli->prepare("INSERT INTO users (username,contact, password, email,user_role) VALUES (?, ?, ?, ?,?)");
-    $stmt->bind_param("sssss", $username, $contact, $hashed_password, $email, $user_role);
-    $stmt->execute();
-
-    // Check if the insertion was successful.
-    if ($stmt->affected_rows != 1) {
-        return "An error occurred. Please try again";
+    if ($user_role == "cadmin") {
+        $stmt = $mysqli->prepare("INSERT INTO users (username,contact, password, email,user_role) VALUES (?, ?, ?, ?,?)");
+        $stmt->bind_param("sssss", $username, $contact, $hashed_password, $email, $user_role);
+        $stmt->execute();
+        // Check if the insertion was successful.
+        if ($stmt->affected_rows != 1) {
+            return "An error occurred. Please try again";
+        } else {
+            // If successful, return a success message.
+            return "adminsuccess";
+        }
     } else {
-        // If successful, return a success message.
-        return "success";
+        $stmt = $mysqli->prepare("INSERT INTO users (username,contact, password, email,user_role) VALUES (?, ?, ?, ?,?)");
+        $stmt->bind_param("sssss", $username, $contact, $hashed_password, $email, $user_role);
+        $stmt->execute();
+
+        // Check if the insertion was successful.
+        if ($stmt->affected_rows != 1) {
+            return "An error occurred. Please try again";
+        } else {
+            // If successful, return a success message.
+            return "success";
+        }
     }
     $mysqli->close();
 }
@@ -179,10 +220,13 @@ function loginUser($email, $password)
             $_SESSION['Key'] = "AdminKey";
             header('Location: ../administrator/admin_welcome.php');
             exit();
-        } else {
-
+        } elseif($data['user_role'] == "voter") {
             $_SESSION['Key'] = "VoterKey";
             header('Location: ../voter/member_welcome.php');
+            exit();
+        }elseif($data['user_role'] == "suadmin"){
+            $_SESSION['Key'] = "SuAdminKey";
+            header('Location: ../hero/index.php');
             exit();
         }
     }

@@ -3,7 +3,7 @@ require("Votersession.php");
 ?>
 
 <!doctype html>
-<html lang="en" class="color-sidebar sidebarcolor3 color-header headercolor1">
+<html lang="en" class="color-sidebar sidebarcolor5 color-header headercolor2">
 
 <head>
 	<!-- Required meta tags -->
@@ -28,6 +28,10 @@ require("Votersession.php");
 	<link rel="stylesheet" href="../assets/css/dark-theme.css" />
 	<link rel="stylesheet" href="../assets/css/semi-dark.css" />
 	<link rel="stylesheet" href="../assets/css/header-colors.css" />
+	<!-- SweetAlert-->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="sweetalert2.min.js"></script>
+    <link rel="stylesheet" href="sweetalert2.min.css">
 
 	<link href="../assets/plugins/select2/css/select2.min.css" rel="stylesheet" />
 	<link href="../assets/plugins/select2/css/select2-bootstrap4.css" rel="stylesheet" />
@@ -68,11 +72,21 @@ require("Votersession.php");
 											<option value="0">Select Available Position</option>
 											<?php
 											include 'connection.php';
-											$fetch_position_table = "Select * from positions order by id";
-											$fetch_query_run1 = mysqli_query($con, $fetch_position_table);
-
-											if (mysqli_num_rows($fetch_query_run1) > 0) {
-												while ($row_fetch1 = mysqli_fetch_array($fetch_query_run1)) {
+											$stmt = $mysqli->prepare("Select team from users where username=?");
+											$stmt->bind_param("s", $_SESSION['username']);
+											$stmt->execute();
+											$result1 = $stmt->get_result();
+											if ($result1->num_rows > 0) {
+												while ($row_fetch2 = $result1->fetch_assoc()) {
+													$team=$row_fetch2['team'];
+												}
+											}
+											$stmt = $mysqli->prepare("Select * from positions where createdby=? order by id");
+											$stmt->bind_param("s", $team);
+											$stmt->execute();
+											$result = $stmt->get_result();
+											if ($result->num_rows > 0) {
+												while ($row_fetch1 = $result->fetch_assoc()) {
 											?>
 													<option <?php echo (isset($_POST['position_name']) && $_POST['position_name'] == $row_fetch1['position']) ? 'selected="selected"' : ''; ?> value="<?php echo $row_fetch1['position']; ?>"><?php echo $row_fetch1['position']; ?></option>
 											<?php
@@ -103,8 +117,16 @@ require("Votersession.php");
 									}
 
 									if (in_array($logname, $str_arr, TRUE)) {
-
-										echo "<h5 class='mb-0 text-danger'>You have voted for this position already...!</h5>";
+										echo '<script>
+										Swal.fire({
+											title: "Oops!",
+											text: "You have voted for this position already!",
+											icon: "error"
+										}).then(() => {
+											window.location.href = window.location.pathname; // Reload page after deletion
+										});
+									  </script>';
+										
 									} elseif ($status == 'Active') {
 										$fetch_position_table = "Select * from candidate where position_name='$position_name'";
 										$fetch_query_run1 = mysqli_query($con, $fetch_position_table);
@@ -145,13 +167,18 @@ require("Votersession.php");
 						$selected_candidate = isset($_POST['selected_candidate']) ? $_POST['selected_candidate'] : '';
 						// echo $position_name;
 						if (isset($_POST['update'])) {
-							
-							if ( $position_name===NULL || $position_name === '') {
-								?>
-								<div class="alert alert-success" role="alert">
-								PLEASE SELECT VALID POSITION NAME ...!
-								</div>
-							<?php	
+
+							if ($position_name === NULL || $position_name === '') {
+								echo '<script>
+                                                    Swal.fire({
+                                                        title: "Oops!",
+                                                        text: "PLEASE SELECT VALID POSITION NAME ...!",
+                                                        icon: "error"
+                                                    }).then(() => {
+                                                        window.location.href = window.location.pathname; // Reload page after deletion
+                                                    });
+                                                  </script>';
+						
 								exit; // Exit to prevent further execution of the code
 							}
 
@@ -186,12 +213,16 @@ require("Votersession.php");
 												$sql_update1 = "UPDATE `candidate` SET `vote` = '$final_votes' WHERE `candidate`.`candidate_name` = '$selected_candidate'";
 
 												if ($con->query($sql_update1) === TRUE) {
-								?>
-													<br>
-													<div class="alert alert-success" role="alert">
-													YOUR VOTE HAS BEEN SUBMITTED SUCCESSFULLY...!
-													</div>
-						<?php
+													echo '<script>
+                                                    Swal.fire({
+                                                        title: "Vote Submitted!",
+                                                        text: "YOUR VOTE HAS BEEN SUBMITTED SUCCESSFULLY!",
+                                                        icon: "success"
+                                                    }).then(() => {
+                                                        window.location.href = window.location.pathname; // Reload page after deletion
+                                                    });
+                                                  </script>';
+								
 													// echo "<h5 class='mb-0 text-success'>YOUR VOTE HAS BEEN SUBMITTED SUCCESSFULLY...!</h5>";
 												}
 											}

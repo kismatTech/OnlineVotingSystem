@@ -3,7 +3,7 @@ require("Adminsession.php");
 ?>
 
 <!doctype html>
-<html lang="en" class="color-sidebar sidebarcolor3 color-header headercolor2">
+<html lang="en" class="color-sidebar sidebarcolor1">
 
 <head>
 	<!-- Required meta tags -->
@@ -28,6 +28,10 @@ require("Adminsession.php");
 	<link rel="stylesheet" href="assets/css/dark-theme.css" />
 	<link rel="stylesheet" href="assets/css/semi-dark.css" />
 	<link rel="stylesheet" href="assets/css/header-colors.css" />
+	<!-- SweetAlert-->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<script src="sweetalert2.min.js"></script>
+	<link rel="stylesheet" href="sweetalert2.min.css">
 	<title>Online Voting System - Candidate</title>
 </head>
 

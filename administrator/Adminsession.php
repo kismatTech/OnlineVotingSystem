@@ -5,7 +5,7 @@ require_once("../admin/inc/config.php");
 require("../admin/inc/function.php");
 if (($_SESSION['Key'] != "AdminKey")) {
 
-    header("location:./logout.php");
+    header("location:../logout.php");
     exit();
 }
 $logname = htmlspecialchars($_SESSION["username"]);

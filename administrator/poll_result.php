@@ -2,7 +2,7 @@
 require("Adminsession.php");
 ?>
 <!doctype html>
-<html lang="en" class="color-sidebar sidebarcolor3 color-header headercolor2">
+<html lang="en" class="color-sidebar sidebarcolor1">
 
 <head>
 	<!-- Required meta tags -->
@@ -26,6 +26,10 @@ require("Adminsession.php");
 	<link rel="stylesheet" href="../assets/css/dark-theme.css" />
 	<link rel="stylesheet" href="../assets/css/semi-dark.css" />
 	<link rel="stylesheet" href="../assets/css/header-colors.css" />
+	<!-- SweetAlert-->
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	<script src="sweetalert2.min.js"></script>
+	<link rel="stylesheet" href="sweetalert2.min.css">
 	<title>Online Voting System</title>
 </head>
 
@@ -78,17 +82,21 @@ require("Adminsession.php");
 											<div class="mt-3">
 												<?php
 												include 'connection.php';
-												$candidate_table = "Select * from candidate order by vote DESC LIMIT 1";
-												$fetch_query_run = mysqli_query($con, $candidate_table);
-												if (mysqli_num_rows($fetch_query_run) > 0) {
-													while ($row_fetch = mysqli_fetch_array($fetch_query_run)) {
+												$stmt = $mysqli->prepare("SELECT * FROM candidate WHERE createdby=?  ORDER BY vote DESC");
+												$stmt->bind_param("s", $_SESSION["username"]);
+												$stmt->execute();
+												$query_run = $stmt->get_result();
+
+												if ($query_run->num_rows > 0) {
+													while ($row_fetch = $query_run->fetch_assoc()) {
 												?>
-														<h4><?php echo $row_fetch['candidate_name']; ?></h4>
-														<p class="text-secondary mb-1"><?php echo $row_fetch['position_name']; ?></p>
+														<h4>eVoteShield</h4>
+
 														<!--<p class="text-muted font-size-sm">Bay Area, San Francisco, CA</p>--><br>
-														<button class="btn btn-primary">Vote</button>
-														<button class="btn btn-outline-primary"><?php echo $row_fetch['vote']; ?></button>
+														<!-- <button class="btn btn-primary">Vote</button>
+														<button class="btn btn-outline-primary"><?php echo $row_fetch['vote']; ?></button> -->
 												<?php
+
 													}
 												}
 												?>
@@ -159,17 +167,20 @@ require("Adminsession.php");
 													<tbody>
 														<?php
 														include 'connection.php';
-														$candidate_table = "Select * from candidate order by vote DESC";
-														$fetch_query_run = mysqli_query($con, $candidate_table);
-														if (mysqli_num_rows($fetch_query_run) > 0) {
-															while ($row_fetch = mysqli_fetch_array($fetch_query_run)) {
+														$stmt = $mysqli->prepare("SELECT * FROM candidate WHERE createdby=? ORDER BY vote DESC");
+														$stmt->bind_param("s", $_SESSION["username"]);
+														$stmt->execute();
+														$query_run = $stmt->get_result();
+
+														if ($query_run->num_rows > 0) {
+															while ($row_fetch = $query_run->fetch_assoc()) {
 														?>
 																<tr>
 																	<td><?php echo $row_fetch['candidate_name']; ?></td>
 																	<td><?php echo $row_fetch['position_name']; ?></td>
 																	<td><?php echo $row_fetch['vote']; ?></td>
 																	<td>
-																		<!--<span class="btn btn-sm btn-success radius-30">Delivered</span>-->
+																		<!-- <span class="btn btn-sm btn-success radius-30">Delivered</span> -->
 																	</td>
 																</tr>
 
